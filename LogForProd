@@ -1,0 +1,53 @@
+// 운영 업무 처음 진행하면, 소스 flow를 잘 모르는데, 로그로 Flow를 알 수 있음..
+
+@Aspect
+@Component
+public class LoggingAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
+
+    private ThreadLocal<AtomicInteger> orderCounter = ThreadLocal.withInitial(() -> new AtomicInteger(1));
+
+    @Pointcut("execution(* com.example..controller..*(..)) || execution(* com.example..service..*(..)) || execution(* com.example..mapper..*(..))")
+    public void loggableMethods() {}
+
+    @Before("loggableMethods()")
+    public void logBefore(JoinPoint joinPoint) {
+        int order = orderCounter.get().getAndIncrement();
+        String className = joinPoint.getSignature().getDeclaringTypeName();
+        String methodName = joinPoint.getSignature().getName();
+        String layer = getLayerPrefix(className);
+
+        // JSP나 JS가 어디서 호출했는지 URI 확인
+        String requestUri = getCurrentHttpUri();
+
+        log.info("[{}] {}.{}() 호출 - URI: {}", order, layer, methodName, requestUri);
+    }
+
+    @AfterReturning("loggableMethods()")
+    public void cleanupAfterSuccess() {
+        orderCounter.remove();
+    }
+
+    @AfterThrowing("loggableMethods()")
+    public void cleanupAfterException() {
+        orderCounter.remove();
+    }
+
+    private String getLayerPrefix(String className) {
+        if (className.contains("controller")) return "Controller";
+        if (className.contains("service")) return "Service";
+        if (className.contains("mapper")) return "Mapper";
+        return "기타";
+    }
+
+    private String getCurrentHttpUri() {
+        try {
+            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attr != null) {
+                return attr.getRequest().getRequestURI();
+            }
+        } catch (Exception ignored) {}
+        return "알 수 없음";
+    }
+}
