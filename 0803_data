@@ -67,6 +67,15 @@
  
   또한, catch 블럭이 존재한다면 테스트 시 반드시 한 번은 예외 흐름을 유도하여,
   해당 블럭의 로직이 의도대로 작동하는지 검증하는 습관이 필요하다는 점을 느꼈다.
+
+  ✅ 테스트 시 일부러 throw 던지기
+  
+  try {
+      if (true) throw new NullPointerException("테스트 NPE");
+      ...
+  } catch (Exception e) {
+      log.error("예외 발생!", e);
+  }
   
   🔹 조인 조건 실수
   마지막으로, 조인 조건에서도 실수가 있었다.
