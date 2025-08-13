@@ -1,0 +1,35 @@
+
+# 데이터 뽑으려 작업하다보니, work_cd <> '1' 이라는 조건을 거니까 해당 컬럼이 null인 대상은 걸려 나오지 않았다. (POSTGRE 기준!)
+# Null은 왜 포함이 안되는걸까?? 또, 특정 대상값은 포함하지 않으면서, Null을 포함하려면 어떻게 해야 할까?
+
+
+1. Null이 포함되지 않는 이유 
+=> PostgreSQL에서 work_cd <> '1' 조건을 사용할 때 NULL 값이 걸러지지 않는 이유는 
+   SQL의 3-값 논리(Three-valued logic) 때문이라고 한다.
+
+2. <> 연산자의 의미 
+=> 같지 않다. 라는 뜻인데, 그러면 '1' 이 아닌값이 아닌가? 라고 생각을 했음.
+
+3. SQL에서 NULL의 의미
+=> NULL은 "값이 없다" or "값을 모른다" 이기 떄문에, 어떤 비교든 NULL이 껴있으면 결과가 "모른다"가 된다.
+
+4. [1] 에서 설명한 3-값 논리 
+=> SQL은 True / False / Unknown 세 가지 결과가 가능하다.
+   WHERE 조건에는 true만 결과가 나오기 때문에, Unknown도 걸러진다. 
+
+5. Null 포함하려면 ? 
+=> 조건에 or로 추가하면 된다.
+   WHERE work_cd <> '1' or work_cd is null
+   인데!! 저거 까딱 잘못하면 특정 조건이 더 있는 경우, 괄호 잘못 처리해서 값이 이상해 질 수 있다.
+   다행히, POSTGRE에는 좋은 기능이 있는 듯 하다..
+
+ SELECT * FROM test WHERE col <> '1' OR col IS NULL; -- 단순할때는, OR 한번만 써도 되는데, and 조건이 더 있을땐 괄호 잘 써야함.
+ SELECT * FROM test WHERE col IS DISTINCT FROM '1';  -- null 포함하여 값을 뿌려줌.
+
+6. 최종 정리
+=>
+ <> 비교는 NULL을 비교하면 결과가 UNKNOWN이 되어 WHERE에서 제외됨
+ NULL을 포함하려면 OR col IS NULL 또는 IS DISTINCT FROM 사용
+ SQL에서 NULL 처리는 항상 조심해야 함
+
+
